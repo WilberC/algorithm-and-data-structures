@@ -11,7 +11,7 @@ public class UserService {
 
     public boolean loadUsers(String filePath) {
         users.clear();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+        try (BufferedReader br = new BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(filePath), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             boolean firstLine = true;
             while ((line = br.readLine()) != null) {

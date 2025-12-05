@@ -54,6 +54,18 @@ public class MyHashMap<K, V> {
         return size;
     }
 
+    public MyArrayList<K> getKeys() {
+        MyArrayList<K> keys = new MyArrayList<>();
+        for (int i = 0; i < table.length; i++) {
+            Entry<K, V> current = table[i];
+            while (current != null) {
+                keys.add(current.key);
+                current = current.next;
+            }
+        }
+        return keys;
+    }
+
     private static class Entry<K, V> {
         K key;
         V value;
