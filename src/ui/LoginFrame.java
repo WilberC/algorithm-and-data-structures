@@ -59,13 +59,23 @@ public class LoginFrame extends JFrame {
         JPanel loginCard = new JPanel();
         loginCard.setLayout(new BoxLayout(loginCard, BoxLayout.Y_AXIS));
         loginCard.setBackground(CARD_BG);
-        loginCard.setBorder(new EmptyBorder(40, 60, 40, 60));
+        loginCard.setBorder(new EmptyBorder(40, 50, 40, 50)); // Padding
 
-        // Shadow/Border effect for card (Simple line border for now)
+        // Fixed width for the card so fields look "full size" relative to this card
+        loginCard.setPreferredSize(new Dimension(450, 550));
+
+        // Shadow/Border effect
         loginCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(40, 60, 40, 60)
+                new EmptyBorder(40, 50, 40, 50)
         ));
+
+        // --- Image (Top, Short) ---
+        ImageIcon originalIcon = new ImageIcon("static/images/user_placeholder.png");
+        Image img = originalIcon.getImage();
+        Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH); // Short/Small
+        JLabel imageLabel = new JLabel(new ImageIcon(scaledImg));
+        imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Header
         JLabel titleLabel = new JLabel("Welcome Back");
@@ -84,13 +94,18 @@ public class LoginFrame extends JFrame {
 
         JButton loginBtn = createStyledButton("Sign In", true);
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // Full width button
         loginBtn.addActionListener(this::onLogin);
 
-        // Layout Components in Card
+        // Add components
+        loginCard.add(Box.createVerticalGlue());
+        loginCard.add(imageLabel);
+        loginCard.add(Box.createVerticalStrut(20));
+
         loginCard.add(titleLabel);
         loginCard.add(Box.createVerticalStrut(10));
         loginCard.add(subTitleLabel);
-        loginCard.add(Box.createVerticalStrut(40));
+        loginCard.add(Box.createVerticalStrut(30));
 
         loginCard.add(createLabel("Username"));
         loginCard.add(Box.createVerticalStrut(5));
@@ -103,6 +118,7 @@ public class LoginFrame extends JFrame {
         loginCard.add(Box.createVerticalStrut(30));
 
         loginCard.add(loginBtn);
+        loginCard.add(Box.createVerticalGlue());
 
         centerPanel.add(loginCard);
         add(centerPanel, BorderLayout.CENTER);
@@ -160,33 +176,37 @@ public class LoginFrame extends JFrame {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 12));
         label.setForeground(TEXT_COLOR);
-        label.setAlignmentX(Component.LEFT_ALIGNMENT); // Important for BoxLayout
+        // Make label take full width so text stays left even if component is centered
+        label.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
 
     private JTextField createStyledTextField() {
         JTextField field = new JTextField(20);
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        field.setPreferredSize(new Dimension(300, 40));
+        // Remove preferred size width limit to allow full width
+        field.setPreferredSize(new Dimension(0, 40));
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200)),
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-        field.setAlignmentX(Component.LEFT_ALIGNMENT);
+        field.setAlignmentX(Component.CENTER_ALIGNMENT);
         return field;
     }
 
     private JPasswordField createStyledPasswordField() {
         JPasswordField field = new JPasswordField(20);
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        field.setPreferredSize(new Dimension(300, 40));
+        // Remove preferred size width limit to allow full width
+        field.setPreferredSize(new Dimension(0, 40));
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200)),
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-        field.setAlignmentX(Component.LEFT_ALIGNMENT);
+        field.setAlignmentX(Component.CENTER_ALIGNMENT);
         return field;
     }
 
