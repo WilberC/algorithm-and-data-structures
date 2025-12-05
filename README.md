@@ -1,6 +1,8 @@
 # Algorithm and Data Structures Project
 
-This is a Java Swing application for user management.
+The data has been imported from a CSV file.
+The source of the [data](https://www.datosabiertos.gob.pe/dataset/donaciones-covid-19-ministerio-de-econom%C3%ADa-y-finanzas-mef) is from the Plataforma nacional de datos abiertos of Peru.
+
 
 ## Prerequisites
 
