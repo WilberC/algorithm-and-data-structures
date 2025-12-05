@@ -1,16 +1,13 @@
 package service;
 
 import model.User;
+import structures.MyHashMap;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class UserService {
-    private Map<String, User> users = new HashMap<>();
+    private MyHashMap<String, User> users = new MyHashMap<>();
 
     public boolean loadUsers(String filePath) {
         users.clear();
