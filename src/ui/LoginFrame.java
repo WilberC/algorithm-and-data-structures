@@ -40,15 +40,11 @@ public class LoginFrame extends JFrame {
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         statusLabel.setForeground(new Color(100, 100, 100));
 
-        JButton importCsvBtn = createStyledButton("Import from CSV (Default)", false);
+        JButton importCsvBtn = createStyledButton("Import Users", false);
         importCsvBtn.addActionListener(this::onImportDefault);
-
-        JButton importFileBtn = createStyledButton("Import Users...", false);
-        importFileBtn.addActionListener(this::onImportFile);
 
         topBar.add(statusLabel);
         topBar.add(importCsvBtn);
-        topBar.add(importFileBtn);
 
         add(topBar, BorderLayout.NORTH);
 
@@ -62,7 +58,7 @@ public class LoginFrame extends JFrame {
         loginCard.setBorder(new EmptyBorder(40, 50, 40, 50)); // Padding
 
         // Fixed width for the card so fields look "full size" relative to this card
-        loginCard.setPreferredSize(new Dimension(450, 550));
+        loginCard.setPreferredSize(new Dimension(450, 600));
 
         // Shadow/Border effect
         loginCard.setBorder(BorderFactory.createCompoundBorder(
@@ -97,6 +93,11 @@ public class LoginFrame extends JFrame {
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // Full width button
         loginBtn.addActionListener(this::onLogin);
 
+        JButton registerBtn = createStyledButton("Register", false);
+        registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        registerBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // Full width button
+        registerBtn.addActionListener(this::onRegister);
+
         // Add components
         loginCard.add(Box.createVerticalGlue());
         loginCard.add(imageLabel);
@@ -118,6 +119,8 @@ public class LoginFrame extends JFrame {
         loginCard.add(Box.createVerticalStrut(30));
 
         loginCard.add(loginBtn);
+        loginCard.add(Box.createVerticalStrut(10));
+        loginCard.add(registerBtn);
         loginCard.add(Box.createVerticalGlue());
 
         centerPanel.add(loginCard);
@@ -127,29 +130,48 @@ public class LoginFrame extends JFrame {
     private void onImportDefault(ActionEvent e) {
         String defaultPath = "data/users.csv";
         boolean success = userService.loadUsers(defaultPath);
-        updateStatus(success);
-    }
-
-    private void onImportFile(ActionEvent e) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File("."));
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            boolean success = userService.loadUsers(selectedFile.getAbsolutePath());
-            updateStatus(success);
-        }
-    }
-
-    private void updateStatus(boolean success) {
         if (success) {
             statusLabel.setText("Users loaded: Yes (" + userService.getUserCount() + ")");
             statusLabel.setForeground(new Color(40, 167, 69)); // Green
-            JOptionPane.showMessageDialog(this, "Users loaded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Import from '" + defaultPath + "' " + userService.getUserCount() + " users", "Import Successful", JOptionPane.INFORMATION_MESSAGE);
         } else {
             statusLabel.setText("Users loaded: Error");
             statusLabel.setForeground(Color.RED);
-            JOptionPane.showMessageDialog(this, "Failed to load users.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Failed to load users from " + defaultPath, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void onRegister(ActionEvent e) {
+        JTextField regUserField = new JTextField();
+        JPasswordField regPassField = new JPasswordField();
+        JTextField regNameField = new JTextField();
+
+        Object[] message = {
+            "Username:", regUserField,
+            "Password:", regPassField,
+            "Name:", regNameField
+        };
+
+        int option = JOptionPane.showConfirmDialog(this, message, "Register New User", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            String user = regUserField.getText();
+            String pass = new String(regPassField.getPassword());
+            String name = regNameField.getText();
+
+            if (user.isEmpty() || pass.isEmpty() || name.isEmpty()) {
+                 JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+                 return;
+            }
+
+            // Hardcoded path as per requirements
+            boolean success = userService.registerUser("data/users.csv", user, pass, name);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "User registered successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                statusLabel.setText("Users loaded: Yes (" + userService.getUserCount() + ")");
+                statusLabel.setForeground(new Color(40, 167, 69));
+            } else {
+                JOptionPane.showMessageDialog(this, "Registration failed. User might already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

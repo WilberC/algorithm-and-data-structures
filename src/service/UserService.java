@@ -53,4 +53,23 @@ public class UserService {
     public int getUserCount() {
         return users.size();
     }
+
+    public boolean registerUser(String filePath, String username, String password, String name) {
+        if (users.get(username) != null) {
+            return false; // User already exists
+        }
+
+        try (java.io.FileWriter fw = new java.io.FileWriter(filePath, true);
+             java.io.BufferedWriter bw = new java.io.BufferedWriter(fw);
+             java.io.PrintWriter out = new java.io.PrintWriter(bw)) {
+
+            out.println(username + "," + password + "," + name);
+
+            users.put(username, new User(username, password, name));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
