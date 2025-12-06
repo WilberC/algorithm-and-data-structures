@@ -19,8 +19,9 @@ public class MainFrame extends JFrame {
     private JTable table;
     private DefaultTableModel tableModel;
     private JComboBox<String> searchFieldCombo;
-    private JTextField searchInput;
+    private JComboBox<String> searchInput;
     private JLabel statusLabel;
+    private MyArrayList<String> currentSearchOptions;
 
     // Dynamic Filters
     // Map<CategoryKey, List<CheckBoxes>>
@@ -69,7 +70,28 @@ public class MainFrame extends JFrame {
         searchPanel.setBorder(BorderFactory.createTitledBorder("Search Criteria"));
 
         searchFieldCombo = new JComboBox<>(new String[]{"Nombre Item", "Proveedor", "Nro Orden", "Almacen"});
-        searchInput = new JTextField(20);
+        searchFieldCombo.addActionListener(e -> updateSearchSuggestions());
+
+        searchInput = new JComboBox<>();
+        searchInput.setEditable(true);
+        searchInput.setPreferredSize(new Dimension(200, 25));
+
+        // Setup AutoComplete listener
+        Component editor = searchInput.getEditor().getEditorComponent();
+        if (editor instanceof JTextField) {
+            JTextField tf = (JTextField) editor;
+            tf.addKeyListener(new java.awt.event.KeyAdapter() {
+                @Override
+                public void keyReleased(java.awt.event.KeyEvent e) {
+                     // Invoke later to let the text update first
+                     SwingUtilities.invokeLater(() -> {
+                         String text = tf.getText();
+                         filterSearchSuggestions(text);
+                     });
+                }
+            });
+        }
+
         JButton searchBtn = new JButton("Search");
         searchBtn.addActionListener(this::onSearch);
 
@@ -93,19 +115,36 @@ public class MainFrame extends JFrame {
 
         // Add dynamic filters
         addFilterCategory(filterContent, "Tipo Gobierno", DonationMetadata.TIPO_GOBIERNO, "TIPO_GOBIERNO");
-        addFilterCategory(filterContent, "Mes", DonationMetadata.MES_MOVIMTO, "MES_MOVIMTO");
+        addFilterCategory(filterContent, "Mes Movimiento", DonationMetadata.MES_MOVIMTO, "MES_MOVIMTO");
         addFilterCategory(filterContent, "Tipo Uso", DonationMetadata.TIPO_USO, "TIPO_USO");
-        addFilterCategory(filterContent, "Tipo Bien", DonationMetadata.TIPO_BIEN, "TIPO_BIEN");
+
 
         JScrollPane filterScroll = new JScrollPane(filterContent);
         filterScroll.setBorder(null);
         filterContainer.add(filterScroll, BorderLayout.CENTER);
 
         // Table
-        String[] columns = {"Item", "Proveedor", "Fecha", "Almacen", "Tipo Uso", "Cantidad", "Total"};
+        // Table
+        String[] columns = {
+            "Año", "Tipo Gob", "Sector", "Pliego", "Sec Ejec", "Ejecutora",
+            "Almacen", "Sec Almacen", "Nom Almacen", "Tipo Transac", "Nro Mov",
+            "Nro Orden", "Proveedor", "Nom Proveedor", "Observacion", "Fecha Mov",
+            "Mes Mov", "Tipo Uso", "Nro Guia", "Nro Factura", "Est Kardex",
+            "Fecha Reg", "Doc Confirma", "Fecha Confirma", "Glosa", "Tipo Bien",
+            "Grupo Bien", "Nom Grupo", "Clase Bien", "Nom Clase", "Familia Bien",
+            "Nom Familia", "Item Bien", "Nom Item", "Unidad", "Nom Unidad",
+            "Marca", "Nom Marca", "Cantidad", "Precio Unit", "Total"
+        };
         tableModel = new DefaultTableModel(columns, 0);
         table = new JTable(tableModel);
-        JScrollPane tableScroll = new JScrollPane(table);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        // Set column widths
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(150);
+        }
+
+        JScrollPane tableScroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         centerPanel.add(searchPanel, BorderLayout.NORTH);
         centerPanel.add(tableScroll, BorderLayout.CENTER);
@@ -167,6 +206,7 @@ public class MainFrame extends JFrame {
             statusLabel.setText("Records: " + count);
             JOptionPane.showMessageDialog(this, "Imported " + count + " records.", "Success", JOptionPane.INFORMATION_MESSAGE);
             updateTable(donationService.getAll());
+            updateSearchSuggestions();
         } else {
             JOptionPane.showMessageDialog(this, "Failed to import data.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -174,9 +214,52 @@ public class MainFrame extends JFrame {
 
     private void onSearch(ActionEvent e) {
         String field = (String) searchFieldCombo.getSelectedItem();
-        String value = searchInput.getText();
+        String value = (String) searchInput.getEditor().getItem();
+        if (value == null) value = "";
         MyArrayList<Donation> results = donationService.search(field, value);
         updateTable(results);
+    }
+
+    private void updateSearchSuggestions() {
+        String field = (String) searchFieldCombo.getSelectedItem();
+        currentSearchOptions = donationService.getUniqueValues(field);
+        // Initially empty or full? Let's keep it empty until typed or show all if small
+        filterSearchSuggestions("");
+    }
+
+    private void filterSearchSuggestions(String text) {
+        if (currentSearchOptions == null) return;
+
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) searchInput.getModel();
+        model.removeAllElements();
+
+        // Add current text to avoid it being lost if it's not in the list yet
+        // But we want to show suggestions.
+        // Logic: if text is empty, maybe show nothing or top 10?
+
+        int count = 0;
+        String lower = text.toLowerCase();
+
+        for (String opt : currentSearchOptions) {
+            if (opt.toLowerCase().contains(lower)) {
+                model.addElement(opt);
+                count++;
+                if (count > 50) break; // Limit to 50 suggestions
+            }
+        }
+
+        JTextField tf = (JTextField) searchInput.getEditor().getEditorComponent();
+        String currentText = tf.getText();
+
+        if (!currentText.equals(text)) {
+            tf.setText(text);
+        }
+
+        if (count > 0 && !text.isEmpty() && searchInput.isShowing()) {
+            searchInput.showPopup();
+        } else {
+             searchInput.hidePopup();
+        }
     }
 
     private void onSort(ActionEvent e) {
@@ -201,7 +284,7 @@ public class MainFrame extends JFrame {
         if (!checkCategory(d.getTipoGobierno(), "TIPO_GOBIERNO")) return false;
         if (!checkCategory(d.getMesMovimto(), "MES_MOVIMTO")) return false;
         if (!checkCategory(d.getTipoUso(), "TIPO_USO")) return false;
-        if (!checkCategory(d.getTipoBien(), "TIPO_BIEN")) return false;
+
         return true;
     }
 
@@ -229,12 +312,46 @@ public class MainFrame extends JFrame {
         tableModel.setRowCount(0);
         for (Donation d : list) {
             Vector<Object> row = new Vector<>();
-            row.add(d.getNombreItem());
-            row.add(d.getNombreProveedor());
-            row.add(d.getFechaMovimto());
+            row.add(d.getAnoEje());
+            row.add(d.getTipoGobierno());
+            row.add(d.getSector());
+            row.add(d.getPliego());
+            row.add(d.getSecEjec());
+            row.add(d.getEjecutora());
+            row.add(d.getAlmacen());
+            row.add(d.getSecAlmacen());
             row.add(d.getNombreAlmacen());
+            row.add(d.getTipoTransac());
+            row.add(d.getNroMovimto());
+            row.add(d.getNroOrden());
+            row.add(d.getProveedor());
+            row.add(d.getNombreProveedor());
+            row.add(d.getObservacion());
+            row.add(d.getFechaMovimto());
+            row.add(d.getMesMovimto());
             row.add(d.getTipoUso());
+            row.add(d.getNroGuia());
+            row.add(d.getNroFactura());
+            row.add(d.getEstadoKardex());
+            row.add(d.getFechaReg());
+            row.add(d.getDocumConfirma());
+            row.add(d.getFechaConfirma());
+            row.add(d.getGlosa());
+            row.add(d.getTipoBien());
+            row.add(d.getGrupoBien());
+            row.add(d.getNombreGrupo());
+            row.add(d.getClaseBien());
+            row.add(d.getNombreClase());
+            row.add(d.getFamiliaBien());
+            row.add(d.getNombreFamilia());
+            row.add(d.getItemBien());
+            row.add(d.getNombreItem());
+            row.add(d.getUnidadMedida());
+            row.add(d.getNombreUmedida());
+            row.add(d.getMarca());
+            row.add(d.getNombreMarca());
             row.add(d.getCantArticulo());
+            row.add(d.getPrecioUnit());
             row.add(d.getValorTotal());
             tableModel.addRow(row);
         }
@@ -252,7 +369,12 @@ public class MainFrame extends JFrame {
             }
 
             try (java.io.PrintWriter pw = new java.io.PrintWriter(path)) {
-                pw.println("Item,Proveedor,Fecha,Almacen,Tipo Uso,Cantidad,Total");
+                StringBuilder header = new StringBuilder();
+                for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                    header.append(tableModel.getColumnName(j));
+                    if (j < tableModel.getColumnCount() - 1) header.append(",");
+                }
+                pw.println(header.toString());
                 for (int i = 0; i < tableModel.getRowCount(); i++) {
                     StringBuilder sb = new StringBuilder();
                     for (int j = 0; j < tableModel.getColumnCount(); j++) {

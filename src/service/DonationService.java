@@ -40,22 +40,50 @@ public class DonationService {
                 if (parts.length >= 47) { // We expect around 47 fields now
                     Donation d = new Donation();
                     d.setAnoEje(getPart(parts, 0));
-                    // Index 1 is likely Department/Location, skipping for now as it's not in model
+                    // 1: Dept (Skip)
                     d.setTipoGobierno(getPart(parts, 2));
-                    // Index 3 is likely TipoGobiernoNombre
-
+                    // 3: TipoGobNombre (Skip)
                     d.setSector(getPart(parts, 4));
+                    // 5: SectorNombre (Skip)
                     d.setPliego(getPart(parts, 6));
+                    // 7: PliegoNombre (Skip)
+                    d.setSecEjec(getPart(parts, 8));
                     d.setEjecutora(getPart(parts, 9));
+                    // 10: EjecutoraNombre (Skip)
+                    d.setAlmacen(getPart(parts, 11));
+                    d.setSecAlmacen(getPart(parts, 12));
                     d.setNombreAlmacen(getPart(parts, 13));
+                    d.setTipoTransac(getPart(parts, 14));
+                    // 15: TipoTransacNombre (Skip)
+                    d.setNroMovimto(getPart(parts, 16));
                     d.setNroOrden(getPart(parts, 17));
+                    d.setProveedor(getPart(parts, 18));
                     d.setNombreProveedor(getPart(parts, 19));
+                    d.setObservacion(getPart(parts, 20));
                     d.setFechaMovimto(getPart(parts, 21));
                     d.setMesMovimto(getPart(parts, 22));
+                    // 23: MesNombre (Skip)
                     d.setTipoUso(getPart(parts, 24));
+                    d.setNroGuia(getPart(parts, 25));
+                    d.setNroFactura(getPart(parts, 26));
+                    d.setEstadoKardex(getPart(parts, 27));
+                    d.setFechaReg(getPart(parts, 28));
+                    d.setDocumConfirma(getPart(parts, 29));
+                    d.setFechaConfirma(getPart(parts, 30));
+                    d.setGlosa(getPart(parts, 31));
                     d.setTipoBien(getPart(parts, 32));
+                    d.setGrupoBien(getPart(parts, 33));
+                    d.setNombreGrupo(getPart(parts, 34));
+                    d.setClaseBien(getPart(parts, 35));
+                    d.setNombreClase(getPart(parts, 36));
+                    d.setFamiliaBien(getPart(parts, 37));
+                    d.setNombreFamilia(getPart(parts, 38));
+                    d.setItemBien(getPart(parts, 39));
                     d.setNombreItem(getPart(parts, 40));
-                    d.setNombreMarca(getPart(parts, 43));
+                    d.setUnidadMedida(getPart(parts, 41));
+                    d.setNombreUmedida(getPart(parts, 42));
+                    d.setMarca(getPart(parts, 43));
+                    d.setNombreMarca(getPart(parts, 43)); // Assuming 43 is the only brand field available
 
                     try {
                         d.setCantArticulo(Double.parseDouble(getPart(parts, 44).replace("\"", "")));
@@ -108,6 +136,24 @@ public class DonationService {
             if (v2 == null) v2 = "";
             return ascending ? v1.compareTo(v2) : v2.compareTo(v1);
         });
+    }
+
+    public MyArrayList<String> getUniqueValues(String field) {
+        MyHashMap<String, Boolean> seen = new MyHashMap<>();
+        MyArrayList<String> unique = new MyArrayList<>();
+
+        for (Donation d : donations) {
+            String val = getFieldValue(d, field);
+            if (val != null && !val.trim().isEmpty()) {
+                if (seen.get(val) == null) {
+                    seen.put(val, true);
+                    unique.add(val);
+                }
+            }
+        }
+        // Sort
+        unique.quickSort((s1, s2) -> s1.compareTo(s2));
+        return unique;
     }
 
     private String getFieldValue(Donation d, String field) {
