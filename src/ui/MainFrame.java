@@ -54,8 +54,18 @@ public class MainFrame extends JFrame {
         importBtn.setForeground(Color.WHITE);
         importBtn.addActionListener(this::onImport);
 
+        JButton statsBtn = new JButton("Statistics");
+        statsBtn.setBackground(new Color(40, 167, 69)); // Green
+        statsBtn.setForeground(Color.WHITE);
+        statsBtn.addActionListener(e -> {
+            SwingUtilities.invokeLater(() -> {
+                new StatisticsFrame().setVisible(true);
+            });
+        });
+
         rightTop.add(statusLabel);
         rightTop.add(importBtn);
+        rightTop.add(statsBtn);
 
         topBar.add(titleLabel, BorderLayout.WEST);
         topBar.add(rightTop, BorderLayout.EAST);
